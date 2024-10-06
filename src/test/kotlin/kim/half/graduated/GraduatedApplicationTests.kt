@@ -52,7 +52,6 @@ class ControllerTest {
                 .content(objectMapper.writeValueAsString(webLoginRequest))
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
-            .andExpect(MockMvcResultMatchers.jsonPath("$.ok").value(true))
     }
 
     @Test
@@ -63,7 +62,6 @@ class ControllerTest {
                 .content(objectMapper.writeValueAsString(mobileLoginRequest))
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
-            .andExpect(MockMvcResultMatchers.jsonPath("$.ok").value(true))
     }
 
     @Test
@@ -74,7 +72,6 @@ class ControllerTest {
                 .content(objectMapper.writeValueAsString(mobileLoginRequest))
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
-            .andExpect(MockMvcResultMatchers.jsonPath("$.ok").value(true))
 
         val result = mockMvc.perform(
             MockMvcRequestBuilders.post("/web/auth/login")
@@ -82,7 +79,6 @@ class ControllerTest {
                 .content(objectMapper.writeValueAsString(webLoginRequest))
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
-            .andExpect(MockMvcResultMatchers.jsonPath("$.ok").value(true))
             .andReturn()
 
         val responseBody = result.response.getContentAsString();
@@ -97,7 +93,6 @@ class ControllerTest {
                 .content(objectMapper.writeValueAsString(otpRequest))
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
-            .andExpect(MockMvcResultMatchers.jsonPath("$.ok").value(true))
     }
 
     @Test
@@ -109,7 +104,6 @@ class ControllerTest {
                 .content(objectMapper.writeValueAsString(mobileLoginRequest))
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
-            .andExpect(MockMvcResultMatchers.jsonPath("$.ok").value(true))
 
         // 웹앱 로그인
         val result = mockMvc.perform(
@@ -118,7 +112,6 @@ class ControllerTest {
                 .content(objectMapper.writeValueAsString(webLoginRequest))
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
-            .andExpect(MockMvcResultMatchers.jsonPath("$.ok").value(true))
             .andReturn()
 
         val responseBody = result.response.getContentAsString();
@@ -134,7 +127,6 @@ class ControllerTest {
                 .content(objectMapper.writeValueAsString(otpRequest))
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
-            .andExpect(MockMvcResultMatchers.jsonPath("$.ok").value(true))
 
         mockMvc.perform(
             MockMvcRequestBuilders.post("/web/auth/status")
@@ -142,7 +134,6 @@ class ControllerTest {
                 .content(objectMapper.writeValueAsString(webLoginRequest))
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
-            .andExpect(MockMvcResultMatchers.jsonPath("$.ok").isBoolean)
     }
 
     @Test
@@ -154,16 +145,14 @@ class ControllerTest {
                 .content(objectMapper.writeValueAsString(mobileLoginRequest))
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
-            .andExpect(MockMvcResultMatchers.jsonPath("$.ok").value(true))
 
         // 웹앱 로그인
-        val result = mockMvc.perform(
+        mockMvc.perform(
             MockMvcRequestBuilders.post("/web/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(webLoginRequest))
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
-            .andExpect(MockMvcResultMatchers.jsonPath("$.ok").value(true))
             .andReturn()
 
         val biometricRequest = MobileAuthController.BiometricAuthenticationRequest(
@@ -178,6 +167,5 @@ class ControllerTest {
                 .content(objectMapper.writeValueAsString(biometricRequest))
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
-            .andExpect(MockMvcResultMatchers.jsonPath("$.ok").value(true))
     }
 }

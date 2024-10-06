@@ -43,7 +43,7 @@ class MobileAuthController {
             id = biometricAuthenticationRequest.id,
             password = biometricAuthenticationRequest.password
         )
-        check(result == biometricAuthenticationRequest.isSuccess) { "생체 인식 실패" }
+        check(result) { "생체 인식 실패" }
     }
 
     data class LoginRequest(
