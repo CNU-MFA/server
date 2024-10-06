@@ -1,5 +1,6 @@
 package kim.half.graduated.controller
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import kim.half.graduated.util.*
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
@@ -31,17 +32,18 @@ class MobileAuthController {
     @PostMapping("/otp")
     @ResponseStatus(HttpStatus.OK)
     fun verifyOTP(@RequestBody otpRequest: OTPRequest) {
-        val isOk = passMFA(otpRequest.id, otpRequest.password)
+        val isOk = checkOTP(otpRequest.id, otpRequest.password, otpRequest.otp)
         check(isOk) { "OTP 코드가 일치하지 않습니다." }
     }
 
     // 생체 인식 완료 처리
     @PostMapping("/biometric")
     @ResponseStatus(HttpStatus.OK)
-    fun biometricAuthentication(@RequestBody biometricAuthenticationRequest: BiometricAuthenticationRequest) {
+    fun biometricAuthentication(@RequestBody request: BiometricAuthenticationRequest) {
+        check(request.success) { "생체 인식 실패" }
         val result = passMFA(
-            id = biometricAuthenticationRequest.id,
-            password = biometricAuthenticationRequest.password
+            id = request.id,
+            password = request.password
         )
         check(result) { "생체 인식 실패" }
     }
@@ -52,14 +54,10 @@ class MobileAuthController {
         val token: String,
     )
 
-    data class LoginResponse(
-        val isOk: Boolean,
-    )
-
     data class BiometricAuthenticationRequest(
         val id: String,
         val password: String,
-        val isSuccess: Boolean,
+        val success: Boolean
     )
 
     data class OTPRequest(

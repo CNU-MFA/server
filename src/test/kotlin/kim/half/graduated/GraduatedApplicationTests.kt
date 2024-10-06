@@ -2,10 +2,12 @@ package kim.half.graduated.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.JsonPath
+import jakarta.servlet.ServletException
 import kim.half.graduated.util.mfaStateMap
 import kim.half.graduated.util.otpMap
 import kim.half.graduated.util.tokens
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -158,7 +160,7 @@ class ControllerTest {
         val biometricRequest = MobileAuthController.BiometricAuthenticationRequest(
             id = "id",
             password = "password",
-            isSuccess = true
+            success = true,
         )
 
         mockMvc.perform(
@@ -167,5 +169,118 @@ class ControllerTest {
                 .content(objectMapper.writeValueAsString(biometricRequest))
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
+    }
+
+    @Test
+    fun `web login should throw ServletException with invalid credentials`() {
+        val invalidLoginRequest =
+            WebAuthController.LoginRequest(id = "wrongId", password = "wrongPassword")
+
+        assertThrows(ServletException::class.java) {
+            mockMvc.perform(
+                MockMvcRequestBuilders.post("/web/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(invalidLoginRequest))
+            )
+        }
+    }
+
+    @Test
+    fun `mobile login should throw ServletException with invalid credentials`() {
+        val invalidLoginRequest = MobileAuthController.LoginRequest(
+            id = "wrongId",
+            password = "wrongPassword",
+            token = "invalidToken"
+        )
+
+        assertThrows(ServletException::class.java) {
+            mockMvc.perform(
+                MockMvcRequestBuilders.post("/mobile/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(invalidLoginRequest))
+            )
+        }
+    }
+
+    @Test
+    fun `verify OTP should throw ServletException with invalid OTP`() {
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/mobile/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mobileLoginRequest))
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/web/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(webLoginRequest))
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+
+        val otpRequest =
+            MobileAuthController.OTPRequest(id = "id", password = "password", otp = "invalidOtp")
+
+        assertThrows(ServletException::class.java) {
+            mockMvc.perform(
+                MockMvcRequestBuilders.post("/mobile/auth/otp")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(otpRequest))
+            )
+        }
+    }
+
+    @Test
+    fun `verify MFA should throw ServletException with incorrect OTP`() {
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/mobile/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mobileLoginRequest))
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/web/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(webLoginRequest))
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+
+        val otpRequest =
+            MobileAuthController.OTPRequest(id = "id", password = "password", otp = "wrongOtp")
+
+        assertThrows(ServletException::class.java) {
+            mockMvc.perform(
+                MockMvcRequestBuilders.post("/mobile/auth/otp")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(otpRequest))
+            )
+        }
+    }
+
+    @Test
+    fun `biometric authentication should throw ServletException with unsuccessful biometric`() {
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/mobile/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mobileLoginRequest))
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+
+        val biometricRequest = MobileAuthController.BiometricAuthenticationRequest(
+            id = "id",
+            password = "password",
+            success = false
+        )
+
+        assertThrows(ServletException::class.java) {
+            mockMvc.perform(
+                MockMvcRequestBuilders.post("/mobile/auth/biometric")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(biometricRequest))
+            )
+        }
     }
 }

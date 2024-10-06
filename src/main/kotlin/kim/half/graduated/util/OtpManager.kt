@@ -49,6 +49,16 @@ fun getMFAStatus(id: String, password: String): Boolean {
 fun passMFA(id: String, password: String): Boolean {
     val otp = otpMap[Pair(id, password)]
     checkNotNull(otp) { "No OTP found for $id" }
+    check(mfaStateMap[otp] == false) { "MFA is not passed" }
+    mfaStateMap[otp] = true
+    return mfaStateMap[otp] ?: false
+}
+
+
+fun checkOTP(id: String, password: String, otp: String): Boolean {
+    val original = otpMap[Pair(id, password)]
+    checkNotNull(otp) { "No OTP found for $id" }
+    check(original == otp) { "MFA is not passed" }
     mfaStateMap[otp] = true
     return mfaStateMap[otp] ?: false
 }
