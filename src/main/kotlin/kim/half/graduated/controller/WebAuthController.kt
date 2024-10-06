@@ -19,21 +19,21 @@ class WebAuthController {
 
     @PostMapping("/login")
     fun login(@RequestBody loginRequest: LoginRequest): LoginResponse {
-        check(id == loginRequest.id && password == loginRequest.password) { "로그인 실패" }
+        val result = id == loginRequest.id && password == loginRequest.password
 
         val otp = updateOtp(
             id = loginRequest.id,
             password = loginRequest.password,
             newOtp = generateOtp()
         )
-        return LoginResponse(otp = otp, isOk = true)
+        println(LoginResponse(otp = otp, isOk = result))
+        return LoginResponse(otp = otp, isOk = result)
     }
 
     @PostMapping("/status")
     fun verifyMFA(@RequestBody verifyMFARequest: VerifyMFARequest): VerifyMFAResponse {
         val result = getMFAStatus(verifyMFARequest.id, verifyMFARequest.password)
         return VerifyMFAResponse(isOk = result)
-
     }
 
     data class LoginRequest(

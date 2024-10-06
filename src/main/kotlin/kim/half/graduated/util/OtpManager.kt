@@ -34,11 +34,6 @@ fun getOtp(id: String, password: String): String {
 // 특정 사용자와 세션에 대한 OTP 값 수정하기
 fun updateOtp(id: String, password: String, newOtp: String): String {
     val key = Pair(id, password)
-    if (otpMap.containsKey(key)) {
-        println("OTP updated for $id to $newOtp")
-    } else {
-        println("No OTP found for $id")
-    }
     otpMap[key] = newOtp  // OTP 값 덮어쓰기
     mfaStateMap[newOtp] = false
     return newOtp
