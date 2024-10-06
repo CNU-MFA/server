@@ -11,6 +11,6 @@ class WebConfig : WebMvcConfigurer {
             .allowedOrigins("*") // React 웹앱의 주소
             .allowedMethods("GET", "POST", "PUT", "DELETE") // 허용할 HTTP 메서드
             .allowedHeaders("*") // 모든 헤더 허용
-            .allowCredentials(false) // 쿠키나 인증 정보를 함께 보낼 수 있게 허용
+            .allowCredentials(false) // 쿠키나 인증 정보를 함께 보낼지 여부
     }
 }
