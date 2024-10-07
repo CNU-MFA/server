@@ -1,4 +1,4 @@
-package kim.half.graduated.util
+package kim.half.graduated.service
 
 import java.security.SecureRandom
 
@@ -11,7 +11,7 @@ fun saveToken(id: String, password: String, token: String): String {
     return token
 }
 
-fun generateOtp(): String {
+fun generateOTP(): String {
     val otpLength = 6
     val random = SecureRandom()
     val otp = StringBuilder()
@@ -25,25 +25,26 @@ fun generateOtp(): String {
 }
 
 // 특정 사용자와 세션에 해당하는 OTP 값 가져오기
-fun getOtp(id: String, password: String): String {
+fun getOTP(id: String, password: String): String {
     val otp = otpMap[Pair(id, password)]
     checkNotNull(otp) { "No OTP found for $id" }
     return otp
 }
 
 // 특정 사용자와 세션에 대한 OTP 값 수정하기
-fun updateOtp(id: String, password: String, newOtp: String): String {
+fun updateOTP(id: String, password: String, newOTP: String): String {
     val key = Pair(id, password)
-    otpMap[key] = newOtp  // OTP 값 덮어쓰기
-    mfaStateMap[newOtp] = false
-    return newOtp
+    otpMap[key] = newOTP  // OTP 값 덮어쓰기
+    mfaStateMap[newOTP] = false
+    return newOTP
 }
 
-
 // mfa 인증 상태 조회
-fun getMFAStatus(id: String, password: String): Boolean {
-    val otp = otpMap[Pair(id, password)]
-    return mfaStateMap[otp] ?: false
+fun getMFAStatus(id: String, password: String): MFAStatus {
+    return otpMap[Pair(id, password)]
+        ?.let { mfaStateMap[it] }
+        ?.let { if (it) MFAStatus.PASSED else MFAStatus.NOT_PASSED }
+        ?: MFAStatus.NOT_FOUND
 }
 
 fun passMFA(id: String, password: String): Boolean {
@@ -57,8 +58,12 @@ fun passMFA(id: String, password: String): Boolean {
 
 fun checkOTP(id: String, password: String, otp: String): Boolean {
     val original = otpMap[Pair(id, password)]
-    checkNotNull(otp) { "No OTP found for $id" }
     check(original == otp) { "MFA is not passed" }
     mfaStateMap[otp] = true
     return mfaStateMap[otp] ?: false
+}
+
+
+enum class MFAStatus {
+    PASSED, NOT_PASSED, NOT_FOUND
 }

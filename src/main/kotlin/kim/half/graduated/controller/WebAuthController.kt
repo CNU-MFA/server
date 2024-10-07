@@ -1,6 +1,6 @@
 package kim.half.graduated.controller
 
-import kim.half.graduated.util.*
+import kim.half.graduated.service.*
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
@@ -19,19 +19,22 @@ class WebAuthController {
     fun login(@RequestBody loginRequest: LoginRequest): LoginResponse {
         check(id == loginRequest.id && password == loginRequest.password) { "로그인 실패" }
 
-        val otp = updateOtp(
+        val otp = updateOTP(
             id = loginRequest.id,
             password = loginRequest.password,
-            newOtp = generateOtp()
+            newOTP = generateOTP()
         )
         return LoginResponse(otp = otp)
     }
 
     @PostMapping("/status")
     @ResponseStatus(HttpStatus.OK)
-    fun verifyMFA(@RequestBody verifyMFARequest: VerifyMFARequest) {
-        val result = getMFAStatus(verifyMFARequest.id, verifyMFARequest.password)
-        check(result) { "MFA 실패" }
+    fun checkStatus(@RequestBody checkMFARequest: CheckMFARequest): CheckMFAResponse {
+        val status = getMFAStatus(checkMFARequest.id, checkMFARequest.password)
+
+        return CheckMFAResponse(
+            status = status
+        )
     }
 
     data class LoginRequest(
@@ -43,8 +46,12 @@ class WebAuthController {
         val otp: String?,
     )
 
-    data class VerifyMFARequest(
+    data class CheckMFARequest(
         val id: String,
         val password: String,
+    )
+
+    data class CheckMFAResponse(
+        val status: MFAStatus,
     )
 }

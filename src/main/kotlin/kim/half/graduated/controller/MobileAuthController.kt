@@ -1,7 +1,6 @@
 package kim.half.graduated.controller
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import kim.half.graduated.util.*
+import kim.half.graduated.service.*
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
@@ -25,11 +24,11 @@ class MobileAuthController {
             password = loginRequest.password,
             token = loginRequest.token
         )
-        updateOtp(id = loginRequest.id, password = loginRequest.password, newOtp = generateOtp())
+        updateOTP(id = loginRequest.id, password = loginRequest.password, newOTP = generateOTP())
     }
 
     // OTP 인증
-    @PostMapping("/otp")
+    @PostMapping("/OTP")
     @ResponseStatus(HttpStatus.OK)
     fun verifyOTP(@RequestBody otpRequest: OTPRequest) {
         val isOk = checkOTP(otpRequest.id, otpRequest.password, otpRequest.otp)

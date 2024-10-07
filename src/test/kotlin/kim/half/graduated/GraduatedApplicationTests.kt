@@ -3,9 +3,7 @@ package kim.half.graduated.controller
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.JsonPath
 import jakarta.servlet.ServletException
-import kim.half.graduated.util.mfaStateMap
-import kim.half.graduated.util.otpMap
-import kim.half.graduated.util.tokens
+import kim.half.graduated.service.*
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
@@ -90,7 +88,7 @@ class ControllerTest {
             MobileAuthController.OTPRequest(id = "id", password = "password", otp = otp)
 
         mockMvc.perform(
-            MockMvcRequestBuilders.post("/mobile/auth/otp")
+            MockMvcRequestBuilders.post("/mobile/auth/OTP")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(otpRequest))
         )
@@ -98,7 +96,7 @@ class ControllerTest {
     }
 
     @Test
-    fun `verify MFA should return MFA verification response`() {
+    fun `모바일앱 로그인 O, 웹앱 로그인 O OTP 인증 O`() {
         // 모바일 앱 로그인
         mockMvc.perform(
             MockMvcRequestBuilders.post("/mobile/auth/login")
@@ -122,9 +120,9 @@ class ControllerTest {
         val otpRequest =
             MobileAuthController.OTPRequest(id = "id", password = "password", otp = otp)
 
-        // otp 코드 인증
+        // OTP 코드 인증
         mockMvc.perform(
-            MockMvcRequestBuilders.post("/mobile/auth/otp")
+            MockMvcRequestBuilders.post("/mobile/auth/OTP")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(otpRequest))
         )
@@ -136,6 +134,91 @@ class ControllerTest {
                 .content(objectMapper.writeValueAsString(webLoginRequest))
         )
             .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.status").value(MFAStatus.PASSED.name))
+    }
+
+    @Test
+    fun `모바일앱 로그인 O, 웹앱 로그인 O OTP 인증 X`() {
+        // 모바일 앱 로그인
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/mobile/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mobileLoginRequest))
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+
+        // 웹앱 로그인
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/web/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(webLoginRequest))
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+
+        // OTP 인증 진행 X
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/web/auth/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(webLoginRequest))
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.status").value(MFAStatus.NOT_PASSED.name))
+
+    }
+
+    @Test
+    fun `모바일앱 로그인 O, 웹앱 로그인 X OTP 인증 X`() {
+        // 모바일 앱 로그인
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/mobile/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(mobileLoginRequest))
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+
+        // OTP 인증 진행 X
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/web/auth/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(webLoginRequest))
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.status").value(MFAStatus.NOT_PASSED.name))
+    }
+
+    @Test
+    fun `모바일앱 로그인 X, 웹앱 로그인 O OTP 인증 X`() {
+        // 모바일 앱 로그인 X
+
+        // 웹앱 로그인
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/web/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(webLoginRequest))
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andReturn()
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/web/auth/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(webLoginRequest))
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.status").value(MFAStatus.NOT_PASSED.name))
+    }
+
+    @Test
+    fun `모바일앱 로그인 X, 웹앱 로그인 X OTP 인증 X`() {
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/web/auth/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(webLoginRequest))
+        )
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.jsonPath("$.status").value(MFAStatus.NOT_FOUND.name))
     }
 
     @Test
@@ -220,11 +303,11 @@ class ControllerTest {
             .andReturn()
 
         val otpRequest =
-            MobileAuthController.OTPRequest(id = "id", password = "password", otp = "invalidOtp")
+            MobileAuthController.OTPRequest(id = "id", password = "password", otp = "invalidOTP")
 
         assertThrows(ServletException::class.java) {
             mockMvc.perform(
-                MockMvcRequestBuilders.post("/mobile/auth/otp")
+                MockMvcRequestBuilders.post("/mobile/auth/OTP")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(otpRequest))
             )
@@ -249,11 +332,11 @@ class ControllerTest {
             .andReturn()
 
         val otpRequest =
-            MobileAuthController.OTPRequest(id = "id", password = "password", otp = "wrongOtp")
+            MobileAuthController.OTPRequest(id = "id", password = "password", otp = "wrongOTP")
 
         assertThrows(ServletException::class.java) {
             mockMvc.perform(
-                MockMvcRequestBuilders.post("/mobile/auth/otp")
+                MockMvcRequestBuilders.post("/mobile/auth/OTP")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(otpRequest))
             )
